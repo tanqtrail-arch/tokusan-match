@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>とくさんぶつマッチング</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Zen+Maru+Gothic:wght@700;900&display=swap');
+
+:root {
+  --bg-dark: #1a1030;
+  --bg-mid: #2a1848;
+  --accent-gold: #FFD700;
+  --accent-pink: #FF6B9D;
+  --accent-blue: #4FC3F7;
+  --accent-green: #69F0AE;
+  --combo-glow: #FFD700;
+  --miss-red: #FF5252;
+  --perfect: #69F0AE;
+  --great: #4FC3F7;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'M PLUS Rounded 1c', 'Zen Maru Gothic', sans-serif;
+  background: var(--bg-dark);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1a1030 0%, #2d1b4e 40%, #1a2040 100%);
+  z-index: 100;
+  gap: 24px;
+}
+
+#title-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,107,157,0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(79,195,247,0.12) 0%, transparent 50%);
+}
+
+.title-emoji {
+  font-size: 72px;
+  animation: titleBounce 2s ease-in-out infinite;
+  position: relative; z-index: 1;
+}
+
+@keyframes titleBounce {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+}
+
+.title-text {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: clamp(28px, 7vw, 48px);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-pink), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  position: relative; z-index: 1;
+  letter-spacing: 2px;
+}
+
+.title-sub {
+  color: rgba(255,255,255,0.6);
+  font-size: clamp(14px, 3.5vw, 18px);
+  text-align: center;
+  position: relative; z-index: 1;
+}
+
+.level-select {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 16px;
+  position: relative; z-index: 1;
+  width: min(320px, 85vw);
+}
+
+.level-btn {
+  padding: 16px 24px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.level-btn:hover, .level-btn:active {
+  background: rgba(255,255,255,0.12);
+  border-color: var(--accent-gold);
+  transform: scale(1.03);
+}
+
+.level-btn .emoji { font-size: 28px; }
+.level-btn .info { text-align: left; }
+.level-btn .info small { display: block; color: rgba(255,255,255,0.5); font-weight: 400; font-size: 13px; margin-top: 2px; }
+
+.level-btn.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ===== GAME SCREEN ===== */
+#game-screen {
+  display: none;
+  position: fixed; inset: 0;
+  background: linear-gradient(180deg, #1a1030 0%, #0d0820 100%);
+  flex-direction: column;
+}
+
+/* HUD */
+.hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.hud-back {
+  width: 36px; height: 36px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  font-size: 18px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.hud-back:hover, .hud-back:active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.5);
+  color: #fff;
+}
+
+.hud-score {
+  color: var(--accent-gold);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.hud-combo {
+  color: var(--accent-pink);
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.hud-combo.pop {
+  transform: scale(1.4);
+}
+
+.hud-lives {
+  font-size: 22px;
+  min-width: 80px;
+  text-align: right;
+}
+
+.hud-level {
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+}
+
+/* PLAY AREA */
+.play-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Falling card */
+.falling-card {
+  position: absolute;
+  width: 110px;
+  height: 130px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: grab;
+  z-index: 20;
+  transition: opacity 0.2s;
+  touch-action: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.falling-card .card-emoji {
+  font-size: 48px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.falling-card .card-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* REGION ZONES */
+.region-zones {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 16px;
+  z-index: 10;
+}
+
+.region-zone {
+  flex: 1;
+  padding: 18px 8px;
+  border-radius: 20px;
+  text-align: center;
+  font-weight: 900;
+  font-size: clamp(16px, 4.2vw, 22px);
+  color: #fff;
+  position: relative;
+  transition: all 0.3s;
+  border: 3px solid transparent;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.region-zone .zone-emoji {
+  font-size: 28px;
+}
+
+.region-zone.highlight {
+  transform: scale(1.05);
+  border-color: #fff;
+  box-shadow: 0 0 30px rgba(255,255,255,0.3);
+}
+
+.region-zone.correct-flash {
+  animation: correctPulse 0.5s ease;
+}
+
+.region-zone.wrong-flash {
+  animation: wrongShake 0.5s ease;
+}
+
+@keyframes correctPulse {
+  0% { box-shadow: 0 0 0 0 rgba(105, 240, 174, 0.6); }
+  50% { box-shadow: 0 0 40px 10px rgba(105, 240, 174, 0.4); transform: scale(1.08); }
+  100% { box-shadow: none; }
+}
+
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+/* FEEDBACK POPUP */
+.feedback {
+  position: fixed;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 36px;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 50;
+  animation: feedbackPop 0.8s ease forwards;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+@keyframes feedbackPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  60% { transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+}
+
+/* TRIVIA POPUP */
+.trivia-popup {
+  position: fixed;
+  bottom: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  z-index: 40;
+  animation: triviaSlide 2s ease forwards;
+  white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.15);
+  max-width: 90vw;
+  text-align: center;
+}
+
+@keyframes triviaSlide {
+  0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+/* COMBO BURST */
+.combo-burst {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--accent-gold);
+  pointer-events: none;
+  z-index: 55;
+  animation: comboBurst 1s ease forwards;
+  text-shadow: 0 0 30px rgba(255,215,0,0.6);
+}
+
+@keyframes comboBurst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(-10deg); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.4) rotate(3deg); }
+  70% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -70%) scale(0.7); }
+}
+
+/* FEVER overlay */
+.fever-overlay {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(ellipse at center, rgba(255,215,0,0.08) 0%, transparent 70%);
+  animation: feverPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes feverPulse {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* PARTICLES */
+.particle {
+  position: fixed;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 45;
+  animation: particleFly 0.7s ease-out forwards;
+}
+
+@keyframes particleFly {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0); }
+}
+
+/* ===== RESULT SCREEN ===== */
+#result-screen {
+  display: none;
+  position: fixed; inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1030, #2d1b4e);
+  z-index: 100;
+  gap: 20px;
+  padding: 24px;
+}
+
+.result-title {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--accent-gold);
+}
+
+.result-score {
+  font-size: 56px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.result-stats {
+  display: flex; gap: 24px;
+  color: rgba(255,255,255,0.7);
+  font-size: 16px;
+}
+
+.result-stats span { text-align: center; }
+.result-stats .num { display: block; font-size: 28px; font-weight: 900; color: #fff; }
+
+.result-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 360px;
+}
+
+.result-item {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.result-item.correct { background: rgba(105,240,174,0.2); border: 1px solid rgba(105,240,174,0.4); }
+.result-item.wrong { background: rgba(255,82,82,0.2); border: 1px solid rgba(255,82,82,0.4); }
+
+.btn-restart {
+  margin-top: 12px;
+  padding: 16px 48px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--accent-pink), #FF8A65);
+  color: #fff;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-restart:hover { transform: scale(1.05); }
+
+/* Stars background */
+.stars {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+/* Guide arrow */
+.guide-arrow {
+  position: absolute;
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 25;
+  animation: guideSwipe 1.5s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+@keyframes guideSwipe {
+  0% { transform: translateX(-30px); opacity: 0; }
+  30% { opacity: 0.7; }
+  70% { opacity: 0.7; }
+  100% { transform: translateX(30px); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<!-- TITLE -->
+<div id="title-screen">
+  <div class="title-emoji">🍎🐟🍊</div>
+  <div class="title-text">とくさんぶつ<br>マッチング</div>
+  <div class="title-sub">ただしいちいきにスワイプしよう！</div>
+  <div class="level-select">
+    <button class="level-btn" onclick="startGame(0)">
+      <span class="emoji">🌱</span>
+      <span class="info">レベル1<small>2ちいき ・ ゆっくり</small></span>
+    </button>
+    <button class="level-btn" onclick="startGame(1)">
+      <span class="emoji">🌿</span>
+      <span class="info">レベル2<small>3ちいき ・ ふつう</small></span>
+    </button>
+    <button class="level-btn" onclick="startGame(2)">
+      <span class="emoji">🔥</span>
+      <span class="info">レベル3<small>4ちいき ・ はやい</small></span>
+    </button>
+    <button class="level-btn" onclick="startGame(3)">
+      <span class="emoji">⚡</span>
+      <span class="info">レベル4<small>5ちいき ・ スピード</small></span>
+    </button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div class="hud">
+    <button class="hud-back" onclick="goTitle()">✕</button>
+    <div>
+      <div class="hud-score" id="score">0</div>
+      <div class="hud-level" id="level-label"></div>
+    </div>
+    <div class="hud-combo" id="combo"></div>
+    <div class="hud-lives" id="lives"></div>
+  </div>
+  <div class="play-area" id="play-area"></div>
+  <div class="region-zones" id="region-zones"></div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen">
+  <div class="result-title" id="result-title">🎉 けっか</div>
+  <div class="result-score" id="result-score">0</div>
+  <div class="result-stats">
+    <span><span class="num" id="result-correct">0</span>せいかい</span>
+    <span><span class="num" id="result-combo">0</span>さいだいコンボ</span>
+    <span><span class="num" id="result-miss">0</span>ミス</span>
+  </div>
+  <div class="result-items" id="result-items"></div>
+  <button class="btn-restart" onclick="goTitle()">もういちど</button>
+</div>
+
+<script>
+// ===== 47 PREFECTURES DATA POOL =====
+const PREFECTURES = [
+  { id:'hokkaido', name:'ほっかいどう', emoji:'❄️', bg:'linear-gradient(135deg,#0D47A1,#1976D2)', items:[
+    { name:'じゃがいも', emoji:'🥔', trivia:'じゃがいも → ほっかいどう！にほんのやく8わり' },
+    { name:'メロン', emoji:'🍈', trivia:'メロン → ほっかいどう！ゆうばりメロンがゆうめい🍈' },
+    { name:'カニ', emoji:'🦀', trivia:'カニ → ほっかいどう！たらばがにがゆうめい🦀' },
+    { name:'とうもろこし', emoji:'🌽', trivia:'とうもろこし → ほっかいどう！ひろいだいちでそだつ🌽' },
+    { name:'ラベンダー', emoji:'💜', trivia:'ラベンダー → ほっかいどう！ふらのがゆうめい💜' },
+  ]},
+  { id:'aomori', name:'あおもり', emoji:'🏔️', bg:'linear-gradient(135deg,#1B5E20,#388E3C)', items:[
+    { name:'りんご', emoji:'🍎', trivia:'りんご → あおもりけん！しゅうかくりょう日本一🍎' },
+    { name:'にんにく', emoji:'🧄', trivia:'にんにく → あおもりけん！日本一のさんち🧄' },
+    { name:'ながいも', emoji:'🥔', trivia:'ながいも → あおもりけん！すなのつちでよくそだつ' },
+    { name:'ごぼう', emoji:'🌿', trivia:'ごぼう → あおもりけん！せいさんりょう日本一' },
+  ]},
+  { id:'iwate', name:'いわて', emoji:'⛰️', bg:'linear-gradient(135deg,#2E7D32,#4CAF50)', items:[
+    { name:'わんこそば', emoji:'🍜', trivia:'わんこそば → いわてけん！なんばいたべられるかな🍜' },
+    { name:'てつびん', emoji:'🫖', trivia:'てつびん → いわてけん！なんぶてつきがゆうめい🫖' },
+    { name:'りんどう', emoji:'💐', trivia:'りんどう → いわてけん！けんのはな💐' },
+  ]},
+  { id:'miyagi', name:'みやぎ', emoji:'🌊', bg:'linear-gradient(135deg,#00695C,#00897B)', items:[
+    { name:'ぎゅうたん', emoji:'🥩', trivia:'ぎゅうたん → みやぎけん！せんだいめいぶつ🥩' },
+    { name:'ささかまぼこ', emoji:'🍥', trivia:'ささかまぼこ → みやぎけん！おさかなのねりもの🍥' },
+    { name:'ずんだもち', emoji:'🟢', trivia:'ずんだもち → みやぎけん！えだまめのおもち🟢' },
+  ]},
+  { id:'akita', name:'あきた', emoji:'🌾', bg:'linear-gradient(135deg,#33691E,#558B2F)', items:[
+    { name:'あきたこまち', emoji:'🍚', trivia:'あきたこまち → あきたけん！おいしいおコメ🍚' },
+    { name:'きりたんぽ', emoji:'🍡', trivia:'きりたんぽ → あきたけん！おコメのぼう🍡' },
+    { name:'なまはげ', emoji:'👹', trivia:'なまはげ → あきたけん！でんとうてきなおまつり👹' },
+  ]},
+  { id:'yamagata', name:'やまがた', emoji:'🍒', bg:'linear-gradient(135deg,#880E4F,#AD1457)', items:[
+    { name:'さくらんぼ', emoji:'🍒', trivia:'さくらんぼ → やまがたけん！にほんいちのさんち🍒' },
+    { name:'ラ・フランス', emoji:'🍐', trivia:'ラ・フランス → やまがたけん！あまいようなし🍐' },
+    { name:'いもに', emoji:'🍲', trivia:'いもに → やまがたけん！あきのいもにかいがゆうめい🍲' },
+  ]},
+  { id:'fukushima', name:'ふくしま', emoji:'🍑', bg:'linear-gradient(135deg,#E65100,#F57C00)', items:[
+    { name:'もも', emoji:'🍑', trivia:'もも → ふくしまけん！あまくてジューシー🍑' },
+    { name:'あかべこ', emoji:'🐄', trivia:'あかべこ → ふくしまけん！あかいうしのおきあがりこぼし🐄' },
+    { name:'きゅうり', emoji:'🥒', trivia:'きゅうり → ふくしまけん！しゅうかくりょう日本一🥒' },
+  ]},
+  { id:'ibaraki', name:'いばらき', emoji:'🌸', bg:'linear-gradient(135deg,#4A148C,#6A1B9A)', items:[
+    { name:'なっとう', emoji:'🫘', trivia:'なっとう → いばらきけん！みとなっとうがゆうめい🫘' },
+    { name:'メロン', emoji:'🍈', trivia:'メロン → いばらきけん！せいさんりょう日本一🍈' },
+    { name:'ほしいも', emoji:'🍠', trivia:'ほしいも → いばらきけん！にほんのほとんどがここ🍠' },
+  ]},
+  { id:'tochigi', name:'とちぎ', emoji:'🍓', bg:'linear-gradient(135deg,#B71C1C,#D32F2F)', items:[
+    { name:'いちご', emoji:'🍓', trivia:'いちご → とちぎけん！とちおとめがゆうめい🍓' },
+    { name:'ぎょうざ', emoji:'🥟', trivia:'ぎょうざ → とちぎけん！うつのみやぎょうざ🥟' },
+    { name:'かんぴょう', emoji:'🥒', trivia:'かんぴょう → とちぎけん！にほんのほぼぜんぶがここ' },
+  ]},
+  { id:'gunma', name:'ぐんま', emoji:'♨️', bg:'linear-gradient(135deg,#4E342E,#6D4C41)', items:[
+    { name:'こんにゃく', emoji:'🟫', trivia:'こんにゃく → ぐんまけん！日本一のせいさんりょう' },
+    { name:'やきまんじゅう', emoji:'🍡', trivia:'やきまんじゅう → ぐんまけん！みそだれがおいしい🍡' },
+    { name:'キャベツ', emoji:'🥬', trivia:'キャベツ → ぐんまけん！つまごいむらがゆうめい🥬' },
+  ]},
+  { id:'saitama', name:'さいたま', emoji:'🏙️', bg:'linear-gradient(135deg,#1565C0,#1E88E5)', items:[
+    { name:'そうかせんべい', emoji:'🍘', trivia:'そうかせんべい → さいたまけん！おしょうゆあじ🍘' },
+    { name:'さといも', emoji:'🥔', trivia:'さといも → さいたまけん！せいさんりょうが多い🥔' },
+    { name:'ひなにんぎょう', emoji:'🎎', trivia:'ひなにんぎょう → さいたまけん！いわつきがゆうめい🎎' },
+  ]},
+  { id:'chiba', name:'ちば', emoji:'🥜', bg:'linear-gradient(135deg,#F57F17,#FBC02D)', items:[
+    { name:'らっかせい', emoji:'🥜', trivia:'らっかせい → ちばけん！にほんいちのさんち🥜' },
+    { name:'しょうゆ', emoji:'🫙', trivia:'しょうゆ → ちばけん！のだとちょうしがゆうめい🫙' },
+    { name:'なし', emoji:'🍐', trivia:'なし → ちばけん！ふなばしのなしがゆうめい🍐' },
+  ]},
+  { id:'tokyo', name:'とうきょう', emoji:'🗼', bg:'linear-gradient(135deg,#263238,#455A64)', items:[
+    { name:'もんじゃやき', emoji:'🥞', trivia:'もんじゃやき → とうきょう！つきしまがゆうめい' },
+    { name:'べっこうずし', emoji:'🍣', trivia:'べっこうずし → とうきょう！おがさわらのめいぶつ🍣' },
+    { name:'あしたば', emoji:'🌿', trivia:'あしたば → とうきょう！はちじょうじまでそだつ🌿' },
+  ]},
+  { id:'kanagawa', name:'かながわ', emoji:'🚢', bg:'linear-gradient(135deg,#0D47A1,#1565C0)', items:[
+    { name:'シュウマイ', emoji:'🥟', trivia:'シュウマイ → かながわけん！よこはまめいぶつ🥟' },
+    { name:'かまぼこ', emoji:'🍥', trivia:'かまぼこ → かながわけん！おだわらかまぼこ🍥' },
+    { name:'みかん', emoji:'🍊', trivia:'みかん → かながわけん！ゆがわらみかん🍊' },
+  ]},
+  { id:'niigata', name:'にいがた', emoji:'🌾', bg:'linear-gradient(135deg,#1B5E20,#558B2F)', items:[
+    { name:'コシヒカリ', emoji:'🍚', trivia:'コシヒカリ → にいがたけん！にほんいちのおコメ🍚' },
+    { name:'えだまめ', emoji:'🫛', trivia:'えだまめ → にいがたけん！しゅうかくりょう日本一🫛' },
+    { name:'チューリップ', emoji:'🌷', trivia:'チューリップ → にいがたけん！きれいなはたけ🌷' },
+  ]},
+  { id:'toyama', name:'とやま', emoji:'🏔️', bg:'linear-gradient(135deg,#01579B,#0277BD)', items:[
+    { name:'ますずし', emoji:'🍣', trivia:'ますずし → とやまけん！えきべんでゆうめい🍣' },
+    { name:'ホタルイカ', emoji:'🦑', trivia:'ホタルイカ → とやまけん！ひかるイカ🦑' },
+    { name:'くすり', emoji:'💊', trivia:'くすり → とやまけん！むかしからくすりのまち💊' },
+  ]},
+  { id:'ishikawa', name:'いしかわ', emoji:'🏯', bg:'linear-gradient(135deg,#827717,#9E9D24)', items:[
+    { name:'きんぱく', emoji:'✨', trivia:'きんぱく → いしかわけん！にほんのほとんどがここ✨' },
+    { name:'かがやさい', emoji:'🥕', trivia:'かがやさい → いしかわけん！でんとうやさい🥕' },
+    { name:'わじまぬり', emoji:'🍲', trivia:'わじまぬり → いしかわけん！うつくしいうるしぬり' },
+  ]},
+  { id:'fukui', name:'ふくい', emoji:'👓', bg:'linear-gradient(135deg,#311B92,#5E35B1)', items:[
+    { name:'めがね', emoji:'👓', trivia:'めがね → ふくいけん！にほんの9わりをせいさん👓' },
+    { name:'えちぜんがに', emoji:'🦀', trivia:'えちぜんがに → ふくいけん！ふゆのごちそう🦀' },
+    { name:'へしこ', emoji:'🐟', trivia:'へしこ → ふくいけん！さばのつけもの🐟' },
+  ]},
+  { id:'yamanashi', name:'やまなし', emoji:'🍇', bg:'linear-gradient(135deg,#4A148C,#7B1FA2)', items:[
+    { name:'ぶどう', emoji:'🍇', trivia:'ぶどう → やまなしけん！にほんいちのさんち🍇' },
+    { name:'もも', emoji:'🍑', trivia:'もも → やまなしけん！せいさんりょう日本一🍑' },
+    { name:'ほうとう', emoji:'🍲', trivia:'ほうとう → やまなしけん！ふとめんのなべ🍲' },
+  ]},
+  { id:'nagano', name:'ながの', emoji:'🍎', bg:'linear-gradient(135deg,#1B5E20,#2E7D32)', items:[
+    { name:'りんご', emoji:'🍎', trivia:'りんご → ながのけん！日本2いのさんち🍎' },
+    { name:'そば', emoji:'🍜', trivia:'そば → ながのけん！しんしゅうそばがゆうめい🍜' },
+    { name:'わさび', emoji:'🟢', trivia:'わさび → ながのけん！あずみのがさんち🟢' },
+  ]},
+  { id:'gifu', name:'ぎふ', emoji:'🏮', bg:'linear-gradient(135deg,#BF360C,#E64A19)', items:[
+    { name:'かき', emoji:'🟠', trivia:'かき → ぎふけん！ふゆのくだもの🟠' },
+    { name:'ひだぎゅう', emoji:'🥩', trivia:'ひだぎゅう → ぎふけん！こうきゅうなおにく🥩' },
+    { name:'うかい', emoji:'🐦', trivia:'うかい → ぎふけん！ながらがわのでんとう🐦' },
+  ]},
+  { id:'shizuoka', name:'しずおか', emoji:'🗻', bg:'linear-gradient(135deg,#1B5E20,#43A047)', items:[
+    { name:'おちゃ', emoji:'🍵', trivia:'おちゃ → しずおかけん！にほんいちのちゃどころ🍵' },
+    { name:'うなぎ', emoji:'🐟', trivia:'うなぎ → しずおかけん！はままつがゆうめい🐟' },
+    { name:'みかん', emoji:'🍊', trivia:'みかん → しずおかけん！ひざしたっぷり🍊' },
+  ]},
+  { id:'aichi', name:'あいち', emoji:'🏭', bg:'linear-gradient(135deg,#E65100,#F9A825)', items:[
+    { name:'じどうしゃ', emoji:'🚗', trivia:'じどうしゃ → あいちけん！トヨタのおひざもと🚗' },
+    { name:'みそかつ', emoji:'🍖', trivia:'みそかつ → あいちけん！はっちょうみそでたべる🍖' },
+    { name:'えびせんべい', emoji:'🍘', trivia:'えびせんべい → あいちけん！ゆうめいなおかし🍘' },
+  ]},
+  { id:'mie', name:'みえ', emoji:'🦐', bg:'linear-gradient(135deg,#00695C,#00897B)', items:[
+    { name:'いせえび', emoji:'🦞', trivia:'いせえび → みえけん！いせしまのごちそう🦞' },
+    { name:'まつさかうし', emoji:'🐄', trivia:'まつさかうし → みえけん！さいこうきゅうのおにく🐄' },
+    { name:'しんじゅ', emoji:'💎', trivia:'しんじゅ → みえけん！しんじゅようしょくはっしょうのち💎' },
+  ]},
+  { id:'shiga', name:'しが', emoji:'🌊', bg:'linear-gradient(135deg,#0277BD,#0288D1)', items:[
+    { name:'ふなずし', emoji:'🐟', trivia:'ふなずし → しがけん！びわこのでんとうりょうり🐟' },
+    { name:'しがらきやき', emoji:'🍵', trivia:'しがらきやき → しがけん！たぬきのおきものがゆうめい🍵' },
+    { name:'にんじん', emoji:'🥕', trivia:'にんじん → しがけん！きんこうにんじんがゆうめい🥕' },
+  ]},
+  { id:'kyoto', name:'きょうと', emoji:'⛩️', bg:'linear-gradient(135deg,#880E4F,#AD1457)', items:[
+    { name:'やつはし', emoji:'🍡', trivia:'やつはし → きょうと！にんきのおみやげ🍡' },
+    { name:'まっちゃ', emoji:'🍵', trivia:'まっちゃ → きょうと！うじちゃがゆうめい🍵' },
+    { name:'きょうやさい', emoji:'🥬', trivia:'きょうやさい → きょうと！でんとうやさいがたくさん🥬' },
+  ]},
+  { id:'osaka', name:'おおさか', emoji:'🏯', bg:'linear-gradient(135deg,#E65100,#FF6F00)', items:[
+    { name:'たこやき', emoji:'🐙', trivia:'たこやき → おおさか！くいだおれのまち🐙' },
+    { name:'おこのみやき', emoji:'🥞', trivia:'おこのみやき → おおさか！こなもんぶんか🥞' },
+    { name:'ぶたまん', emoji:'🥟', trivia:'ぶたまん → おおさか！551のぶたまん🥟' },
+  ]},
+  { id:'hyogo', name:'ひょうご', emoji:'🐄', bg:'linear-gradient(135deg,#1A237E,#283593)', items:[
+    { name:'こうべぎゅう', emoji:'🥩', trivia:'こうべぎゅう → ひょうごけん！せかいてきにゆうめい🥩' },
+    { name:'たまねぎ', emoji:'🧅', trivia:'たまねぎ → ひょうごけん！あわじしまがゆうめい🧅' },
+    { name:'そうめん', emoji:'🍜', trivia:'いぼのいと → ひょうごけん！ゆうめいなそうめん🍜' },
+  ]},
+  { id:'nara', name:'なら', emoji:'🦌', bg:'linear-gradient(135deg,#4E342E,#6D4C41)', items:[
+    { name:'かきのはずし', emoji:'🍣', trivia:'かきのはずし → ならけん！はっぱにつつんだおすし🍣' },
+    { name:'くずもち', emoji:'🍡', trivia:'くずもち → ならけん！よしのくずがゆうめい🍡' },
+    { name:'すみ', emoji:'🖊️', trivia:'すみ → ならけん！にほんいちのすみのさんち🖊️' },
+  ]},
+  { id:'wakayama', name:'わかやま', emoji:'🍊', bg:'linear-gradient(135deg,#E65100,#FF8F00)', items:[
+    { name:'みかん', emoji:'🍊', trivia:'みかん → わかやまけん！にほんいちのさんち🍊' },
+    { name:'うめぼし', emoji:'🔴', trivia:'うめぼし → わかやまけん！なんこううめがゆうめい' },
+    { name:'しょうゆ', emoji:'🫙', trivia:'しょうゆ → わかやまけん！ゆあさがはっしょうのち🫙' },
+  ]},
+  { id:'tottori', name:'とっとり', emoji:'🏖️', bg:'linear-gradient(135deg,#F9A825,#FBC02D)', items:[
+    { name:'にじっせいきなし', emoji:'🍐', trivia:'にじっせいきなし → とっとりけん！あまいなし🍐' },
+    { name:'すなのさきゅう', emoji:'🏖️', trivia:'すなのさきゅう → とっとりけん！にほんさいだい🏖️' },
+    { name:'ズワイガニ', emoji:'🦀', trivia:'ズワイガニ → とっとりけん！ふゆのあじかく🦀' },
+  ]},
+  { id:'shimane', name:'しまね', emoji:'⛩️', bg:'linear-gradient(135deg,#37474F,#546E7A)', items:[
+    { name:'しじみ', emoji:'🐚', trivia:'しじみ → しまねけん！しんじこでとれる🐚' },
+    { name:'いずもそば', emoji:'🍜', trivia:'いずもそば → しまねけん！こいいろのそば🍜' },
+    { name:'めのう', emoji:'💎', trivia:'めのう → しまねけん！うつくしいいし💎' },
+  ]},
+  { id:'okayama', name:'おかやま', emoji:'🍑', bg:'linear-gradient(135deg,#FF6F00,#FF8F00)', items:[
+    { name:'もも', emoji:'🍑', trivia:'もも → おかやまけん！はくとうがゆうめい🍑' },
+    { name:'マスカット', emoji:'🍇', trivia:'マスカット → おかやまけん！くだもののおうこく🍇' },
+    { name:'きびだんご', emoji:'🍡', trivia:'きびだんご → おかやまけん！ももたろうのおはなし🍡' },
+  ]},
+  { id:'hiroshima', name:'ひろしま', emoji:'⛩️', bg:'linear-gradient(135deg,#B71C1C,#C62828)', items:[
+    { name:'かき(かい)', emoji:'🦪', trivia:'かき → ひろしまけん！にほんいちのようしょく🦪' },
+    { name:'おこのみやき', emoji:'🥞', trivia:'おこのみやき → ひろしまけん！そばいりがとくちょう🥞' },
+    { name:'レモン', emoji:'🍋', trivia:'レモン → ひろしまけん！せいさんりょう日本一🍋' },
+  ]},
+  { id:'yamaguchi', name:'やまぐち', emoji:'🐡', bg:'linear-gradient(135deg,#004D40,#00695C)', items:[
+    { name:'ふぐ', emoji:'🐡', trivia:'ふぐ → やまぐちけん！しものせきがゆうめい🐡' },
+    { name:'ういろう', emoji:'🍡', trivia:'ういろう → やまぐちけん！やわらかいおかし🍡' },
+    { name:'かまぼこ', emoji:'🍥', trivia:'かまぼこ → やまぐちけん！やきぬきかまぼこ🍥' },
+  ]},
+  { id:'tokushima', name:'とくしま', emoji:'💃', bg:'linear-gradient(135deg,#00838F,#0097A7)', items:[
+    { name:'すだち', emoji:'🟢', trivia:'すだち → とくしまけん！にほんいちのさんち🟢' },
+    { name:'なるときんとき', emoji:'🍠', trivia:'なるときんとき → とくしまけん！あまいさつまいも🍠' },
+    { name:'あいぞめ', emoji:'👘', trivia:'あいぞめ → とくしまけん！でんとうのそめもの👘' },
+  ]},
+  { id:'kagawa', name:'かがわ', emoji:'🍜', bg:'linear-gradient(135deg,#BF360C,#E64A19)', items:[
+    { name:'うどん', emoji:'🍜', trivia:'うどん → かがわけん！「うどんけん」のあいしょう🍜' },
+    { name:'オリーブ', emoji:'🫒', trivia:'オリーブ → かがわけん！しょうどしまがゆうめい🫒' },
+    { name:'ほねつきどり', emoji:'🍗', trivia:'ほねつきどり → かがわけん！クリスマスのていばん🍗' },
+  ]},
+  { id:'ehime', name:'えひめ', emoji:'🍊', bg:'linear-gradient(135deg,#E65100,#FF8F00)', items:[
+    { name:'みかん', emoji:'🍊', trivia:'みかん → えひめけん！「みかんおうこく」🍊' },
+    { name:'いよかん', emoji:'🍊', trivia:'いよかん → えひめけん！なまえの「いよ」は愛媛のこと' },
+    { name:'タオル', emoji:'🧣', trivia:'タオル → えひめけん！いまばりタオルがゆうめい🧣' },
+  ]},
+  { id:'kochi', name:'こうち', emoji:'🌊', bg:'linear-gradient(135deg,#006064,#0097A7)', items:[
+    { name:'カツオ', emoji:'🐟', trivia:'カツオ → こうちけん！カツオのたたきがゆうめい' },
+    { name:'ゆず', emoji:'🍋', trivia:'ゆず → こうちけん！せいさんりょう日本一🍋' },
+    { name:'しょうが', emoji:'🫚', trivia:'しょうが → こうちけん！日本一のしゅうかくりょう' },
+  ]},
+  { id:'fukuoka', name:'ふくおか', emoji:'🍜', bg:'linear-gradient(135deg,#D32F2F,#E53935)', items:[
+    { name:'とんこつラーメン', emoji:'🍜', trivia:'とんこつラーメン → ふくおかけん！はかたラーメン🍜' },
+    { name:'めんたいこ', emoji:'🐟', trivia:'めんたいこ → ふくおかけん！ごはんのおとも🐟' },
+    { name:'あまおう', emoji:'🍓', trivia:'あまおう → ふくおかけん！おおきくてあまいいちご🍓' },
+  ]},
+  { id:'saga', name:'さが', emoji:'🍶', bg:'linear-gradient(135deg,#1B5E20,#388E3C)', items:[
+    { name:'いまりやき', emoji:'🍶', trivia:'いまりやき → さがけん！うつくしいやきもの🍶' },
+    { name:'さがぎゅう', emoji:'🥩', trivia:'さがぎゅう → さがけん！やわらかいおにく🥩' },
+    { name:'のり', emoji:'🌿', trivia:'のり → さがけん！ありあけかいののり🌿' },
+  ]},
+  { id:'nagasaki', name:'ながさき', emoji:'⛪', bg:'linear-gradient(135deg,#0D47A1,#1976D2)', items:[
+    { name:'カステラ', emoji:'🍰', trivia:'カステラ → ながさきけん！ポルトガルからつたわった🍰' },
+    { name:'ちゃんぽん', emoji:'🍜', trivia:'ちゃんぽん → ながさきけん！ぐざいたっぷりめん🍜' },
+    { name:'びわ', emoji:'🟠', trivia:'びわ → ながさきけん！にほんいちのさんち🟠' },
+  ]},
+  { id:'kumamoto', name:'くまもと', emoji:'🐻', bg:'linear-gradient(135deg,#212121,#424242)', items:[
+    { name:'からしれんこん', emoji:'🥬', trivia:'からしれんこん → くまもとけん！ピリッとからい🥬' },
+    { name:'すいか', emoji:'🍉', trivia:'すいか → くまもとけん！にほんいちのさんち🍉' },
+    { name:'ばさし', emoji:'🐴', trivia:'ばさし → くまもとけん！うまのおさしみ🐴' },
+  ]},
+  { id:'oita', name:'おおいた', emoji:'♨️', bg:'linear-gradient(135deg,#E65100,#BF360C)', items:[
+    { name:'おんせん', emoji:'♨️', trivia:'おんせん → おおいたけん！べっぷおんせんがゆうめい♨️' },
+    { name:'かぼす', emoji:'🟢', trivia:'かぼす → おおいたけん！にほんいちのさんち🟢' },
+    { name:'とりてん', emoji:'🍗', trivia:'とりてん → おおいたけん！とりにくのてんぷら🍗' },
+  ]},
+  { id:'miyazaki', name:'みやざき', emoji:'🌴', bg:'linear-gradient(135deg,#00838F,#00ACC1)', items:[
+    { name:'マンゴー', emoji:'🥭', trivia:'マンゴー → みやざきけん！たいようのタマゴ🥭' },
+    { name:'チキンなんばん', emoji:'🍗', trivia:'チキンなんばん → みやざきけん！タルタルソース🍗' },
+    { name:'きゅうり', emoji:'🥒', trivia:'きゅうり → みやざきけん！ふゆもあたたかい🥒' },
+  ]},
+  { id:'kagoshima', name:'かごしま', emoji:'🌋', bg:'linear-gradient(135deg,#37474F,#546E7A)', items:[
+    { name:'くろぶた', emoji:'🐷', trivia:'くろぶた → かごしまけん！おいしいぶたにく🐷' },
+    { name:'さつまいも', emoji:'🍠', trivia:'さつまいも → かごしまけん！なまえのゆらい🍠' },
+    { name:'さつまあげ', emoji:'🍢', trivia:'さつまあげ → かごしまけん！おさかなのすりみ🍢' },
+  ]},
+  { id:'okinawa', name:'おきなわ', emoji:'🌺', bg:'linear-gradient(135deg,#B71C1C,#E53935)', items:[
+    { name:'さとうきび', emoji:'🌿', trivia:'さとうきび → おきなわけん！あたたかいきこうですくすく' },
+    { name:'パイナップル', emoji:'🍍', trivia:'パイナップル → おきなわけん！にほんゆいいつのさんち🍍' },
+    { name:'ゴーヤ', emoji:'🥒', trivia:'ゴーヤ → おきなわけん！ゴーヤチャンプルー🥒' },
+  ]},
+];
+
+// Level configs: regionCount + game params only
+const LEVEL_CONFIGS = [
+  { name: 'レベル1', regionCount: 2, speed: 0.6, interval: 2800, total: 10 },
+  { name: 'レベル2', regionCount: 3, speed: 0.8, interval: 2400, total: 14 },
+  { name: 'レベル3', regionCount: 4, speed: 1.0, interval: 2000, total: 16 },
+  { name: 'レベル4', regionCount: 5, speed: 1.2, interval: 1800, total: 18 },
+];
+
+// Dynamically build a level by picking random prefectures
+function buildLevel(configIdx) {
+  const config = LEVEL_CONFIGS[configIdx];
+  const picked = shuffle(PREFECTURES).slice(0, config.regionCount);
+  const regions = picked.map(p => ({ name: p.name, emoji: p.emoji, bg: p.bg }));
+  const items = [];
+  picked.forEach((p, rIdx) => {
+    p.items.forEach(it => {
+      items.push({ name: it.name, emoji: it.emoji, region: rIdx, trivia: it.trivia });
+    });
+  });
+  return { name: config.name, regions, items, speed: config.speed, interval: config.interval, total: config.total };
+}
+
+// Card color - unified gray (no region hints)
+const CARD_COLOR = 'linear-gradient(135deg, #4A4A5A, #5C5C6E)';
+
+// ===== STATE =====
+let currentLevel = 0;
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let lives = 3;
+let correctCount = 0;
+let missCount = 0;
+let totalSpawned = 0;
+let gameActive = false;
+let spawnTimer = null;
+let animFrame = null;
+let cards = [];
+let shuffledItems = [];
+let itemIndex = 0;
+let results = [];
+let isFever = false;
+let feverEl = null;
+let dragCard = null;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+// ===== INIT =====
+function initStars() {
+  const cont = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = Math.random() * 3 + 's';
+    s.style.width = s.style.height = (1 + Math.random() * 2) + 'px';
+    cont.appendChild(s);
+  }
+}
+initStars();
+
+// ===== SOUNDS (Web Audio) =====
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (type === 'correct') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    osc.frequency.setValueAtTime(659, now + 0.08);
+    osc.frequency.setValueAtTime(784, now + 0.16);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialDecayTo?.(0.01, now + 0.3) || gain.gain.setValueAtTime(0.01, now + 0.3);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } else if (type === 'combo') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(784, now);
+    osc.frequency.setValueAtTime(988, now + 0.1);
+    osc.frequency.setValueAtTime(1175, now + 0.2);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.setValueAtTime(0.01, now + 0.35);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  } else if (type === 'miss') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.setValueAtTime(120, now + 0.1);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.setValueAtTime(0.01, now + 0.2);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  } else if (type === 'fever') {
+    for (let i = 0; i < 5; i++) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime([523,659,784,988,1175][i], now + i*0.08);
+      g.gain.setValueAtTime(0.12, now + i*0.08);
+      g.gain.setValueAtTime(0.01, now + i*0.08 + 0.15);
+      o.start(now + i*0.08);
+      o.stop(now + i*0.08 + 0.15);
+    }
+  }
+}
+
+// ===== GAME LOGIC =====
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let currentLevelData = null; // holds the dynamically built level
+
+function startGame(levelIdx) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  currentLevel = levelIdx;
+  currentLevelData = buildLevel(levelIdx);
+  const lv = currentLevelData;
+  score = 0; combo = 0; maxCombo = 0; lives = 3;
+  correctCount = 0; missCount = 0; totalSpawned = 0;
+  gameActive = true; cards = []; results = [];
+  isFever = false; itemIndex = 0;
+  shuffledItems = shuffle(lv.items);
+  // Ensure enough items
+  while (shuffledItems.length < lv.total) {
+    shuffledItems = shuffledItems.concat(shuffle(lv.items));
+  }
+
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+  document.getElementById('level-label').textContent = lv.name;
+
+  updateHUD();
+  buildRegionZones(lv);
+  // Clear play area
+  document.getElementById('play-area').innerHTML = '';
+
+  // Remove fever overlay if exists
+  if (feverEl) { feverEl.remove(); feverEl = null; }
+
+  // Start spawning with progressive difficulty
+  scheduleSpawn();
+  gameLoop();
+}
+
+function getSpawnCount() {
+  const lv = currentLevelData;
+  const progress = totalSpawned / lv.total; // 0.0 ~ 1.0
+  if (progress < 0.3) return 1;       // 前半: 1個ずつ
+  if (progress < 0.55) return 2;      // 中盤: 2個同時
+  if (progress < 0.8) return Math.random() < 0.5 ? 2 : 3; // 後半: 2〜3個
+  return 3;                            // 終盤: 3個同時
+}
+
+function getSpawnInterval() {
+  const lv = currentLevelData;
+  const progress = totalSpawned / lv.total;
+  // 後半は間隔も少し詰める
+  const factor = progress < 0.5 ? 1.0 : (1.0 - (progress - 0.5) * 0.3);
+  return lv.interval * factor;
+}
+
+function scheduleSpawn() {
+  if (!gameActive) return;
+  const lv = currentLevelData;
+  if (totalSpawned >= lv.total) return;
+
+  const count = getSpawnCount();
+  const remaining = lv.total - totalSpawned;
+  const actualCount = Math.min(count, remaining);
+
+  for (let i = 0; i < actualCount; i++) {
+    // 少しずらして出す（同時だと重なるので）
+    setTimeout(() => spawnOne(), i * 300);
+  }
+
+  const nextInterval = getSpawnInterval();
+  spawnTimer = setTimeout(scheduleSpawn, nextInterval);
+}
+
+function buildRegionZones(lv) {
+  const cont = document.getElementById('region-zones');
+  cont.innerHTML = '';
+  lv.regions.forEach((r, i) => {
+    const z = document.createElement('div');
+    z.className = 'region-zone';
+    z.style.background = r.bg;
+    z.dataset.index = i;
+    z.innerHTML = `<span class="zone-emoji">${r.emoji}</span>${r.name}`;
+    cont.appendChild(z);
+  });
+}
+
+function updateHUD() {
+  document.getElementById('score').textContent = score;
+  const comboEl = document.getElementById('combo');
+  comboEl.textContent = combo > 1 ? `🔥 ${combo}コンボ` : '';
+  if (combo > 1) {
+    comboEl.classList.add('pop');
+    setTimeout(() => comboEl.classList.remove('pop'), 150);
+  }
+  document.getElementById('lives').textContent = '❤️'.repeat(Math.max(0, lives));
+}
+
+function spawnOne() {
+  if (!gameActive) return;
+  const lv = currentLevelData;
+  if (totalSpawned >= lv.total) return;
+
+  const item = shuffledItems[itemIndex % shuffledItems.length];
+  itemIndex++;
+  totalSpawned++;
+
+  const playArea = document.getElementById('play-area');
+  const areaW = playArea.offsetWidth;
+
+  const card = document.createElement('div');
+  card.className = 'falling-card';
+  card.style.background = CARD_COLOR;
+
+  // Spread cards across lanes to avoid overlap
+  const laneCount = Math.min(3, lv.regions.length);
+  const laneWidth = (areaW - 60) / laneCount;
+  const lane = totalSpawned % laneCount;
+  const x = 15 + lane * laneWidth + Math.random() * Math.max(0, laneWidth - 120);
+  card.style.left = x + 'px';
+  card.style.top = '-140px';
+  card.innerHTML = `<span class="card-emoji">${item.emoji}</span><span class="card-name">${item.name}</span>`;
+
+  // Touch/mouse drag
+  card.addEventListener('pointerdown', (e) => onDragStart(e, card));
+
+  playArea.appendChild(card);
+
+  const cardObj = {
+    el: card,
+    x: x,
+    y: -140,
+    item: item,
+    speed: lv.speed * (isFever ? 1.5 : 1),
+    alive: true,
+    dragging: false,
+  };
+  card._cardObj = cardObj;
+  cards.push(cardObj);
+}
+
+// Drag handlers
+function onDragStart(e, cardEl) {
+  if (!gameActive) return;
+  e.preventDefault();
+  const c = cardEl._cardObj;
+  if (!c || !c.alive) return;
+  c.dragging = true;
+  dragCard = c;
+  const rect = cardEl.getBoundingClientRect();
+  dragOffsetX = e.clientX - rect.left;
+  dragOffsetY = e.clientY - rect.top;
+  cardEl.style.zIndex = 30;
+  cardEl.style.cursor = 'grabbing';
+  cardEl.setPointerCapture(e.pointerId);
+  cardEl.addEventListener('pointermove', onDragMove);
+  cardEl.addEventListener('pointerup', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (!dragCard) return;
+  e.preventDefault();
+  const playArea = document.getElementById('play-area');
+  const pr = playArea.getBoundingClientRect();
+  dragCard.x = e.clientX - pr.left - dragOffsetX;
+  dragCard.y = e.clientY - pr.top - dragOffsetY;
+  dragCard.el.style.left = dragCard.x + 'px';
+  dragCard.el.style.top = dragCard.y + 'px';
+
+  // Highlight zone
+  highlightZoneUnder(e.clientX, e.clientY);
+}
+
+function onDragEnd(e) {
+  if (!dragCard) return;
+  e.preventDefault();
+  dragCard.dragging = false;
+  dragCard.el.style.cursor = 'grab';
+  dragCard.el.removeEventListener('pointermove', onDragMove);
+  dragCard.el.removeEventListener('pointerup', onDragEnd);
+
+  // Check which zone
+  const zones = document.querySelectorAll('.region-zone');
+  zones.forEach(z => z.classList.remove('highlight'));
+
+  let matched = false;
+  zones.forEach(z => {
+    const r = z.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+      const zoneIdx = parseInt(z.dataset.index);
+      handleAnswer(dragCard, zoneIdx, z);
+      matched = true;
+    }
+  });
+
+  if (!matched) {
+    // Snap back - card continues falling
+  }
+  dragCard = null;
+}
+
+function highlightZoneUnder(cx, cy) {
+  const zones = document.querySelectorAll('.region-zone');
+  zones.forEach(z => {
+    const r = z.getBoundingClientRect();
+    if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+      z.classList.add('highlight');
+    } else {
+      z.classList.remove('highlight');
+    }
+  });
+}
+
+function handleAnswer(cardObj, zoneIdx, zoneEl) {
+  if (!cardObj.alive) return;
+  cardObj.alive = false;
+
+  const correct = cardObj.item.region === zoneIdx;
+
+  if (correct) {
+    score += isFever ? 200 : 100;
+    combo++;
+    correctCount++;
+    if (combo > maxCombo) maxCombo = combo;
+
+    zoneEl.classList.add('correct-flash');
+    setTimeout(() => zoneEl.classList.remove('correct-flash'), 500);
+
+    showFeedback('PERFECT!', 'var(--perfect)');
+    spawnParticles(cardObj.el, '#69F0AE');
+    results.push({ ...cardObj.item, correct: true });
+
+    if (combo === 5) {
+      showComboBurst('🔥 5コンボ！');
+      playSound('combo');
+    } else if (combo === 10) {
+      showComboBurst('⚡ フィーバー！');
+      playSound('fever');
+      startFever();
+    } else {
+      playSound('correct');
+    }
+  } else {
+    combo = 0;
+    lives--;
+    missCount++;
+
+    zoneEl.classList.add('wrong-flash');
+    setTimeout(() => zoneEl.classList.remove('wrong-flash'), 500);
+
+    showFeedback('MISS', 'var(--miss-red)');
+    showTrivia(cardObj.item.trivia);
+    results.push({ ...cardObj.item, correct: false });
+    playSound('miss');
+    endFever();
+
+    if (lives <= 0) {
+      endGame();
+    }
+  }
+
+  updateHUD();
+
+  // Remove card
+  cardObj.el.style.opacity = '0';
+  setTimeout(() => {
+    if (cardObj.el.parentNode) cardObj.el.parentNode.removeChild(cardObj.el);
+  }, 200);
+
+  // Check if level complete
+  checkComplete();
+}
+
+function checkComplete() {
+  const lv = currentLevelData;
+  if (correctCount + missCount >= lv.total || totalSpawned >= lv.total && cards.filter(c => c.alive).length === 0) {
+    // Small delay to let last animation play
+    setTimeout(() => {
+      if (gameActive) endGame();
+    }, 800);
+  }
+}
+
+function showFeedback(text, color) {
+  const fb = document.createElement('div');
+  fb.className = 'feedback';
+  fb.textContent = text;
+  fb.style.color = color;
+  document.body.appendChild(fb);
+  setTimeout(() => fb.remove(), 800);
+}
+
+function showTrivia(text) {
+  // Remove existing
+  document.querySelectorAll('.trivia-popup').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'trivia-popup';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+function showComboBurst(text) {
+  const b = document.createElement('div');
+  b.className = 'combo-burst';
+  b.textContent = text;
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 1000);
+}
+
+function startFever() {
+  isFever = true;
+  if (!feverEl) {
+    feverEl = document.createElement('div');
+    feverEl.className = 'fever-overlay';
+    document.body.appendChild(feverEl);
+  }
+}
+
+function endFever() {
+  isFever = false;
+  if (feverEl) { feverEl.remove(); feverEl = null; }
+}
+
+function spawnParticles(el, color) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.background = color;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    const angle = (Math.PI * 2 * i) / 8;
+    const dist = 40 + Math.random() * 40;
+    p.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 700);
+  }
+}
+
+// Game loop
+function gameLoop() {
+  if (!gameActive) return;
+
+  const playArea = document.getElementById('play-area');
+  const areaH = playArea.offsetHeight;
+
+  cards.forEach(c => {
+    if (!c.alive || c.dragging) return;
+    c.y += c.speed;
+    c.el.style.top = c.y + 'px';
+
+    // Miss if falls below
+    if (c.y > areaH + 20) {
+      c.alive = false;
+      combo = 0;
+      lives--;
+      missCount++;
+      showFeedback('MISS', 'var(--miss-red)');
+      showTrivia(c.item.trivia);
+      results.push({ ...c.item, correct: false });
+      playSound('miss');
+      endFever();
+      updateHUD();
+      if (c.el.parentNode) c.el.parentNode.removeChild(c.el);
+      if (lives <= 0) endGame();
+      else checkComplete();
+    }
+  });
+
+  // Clean dead cards
+  cards = cards.filter(c => c.alive || c.el.parentNode);
+
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  gameActive = false;
+  clearTimeout(spawnTimer);
+  cancelAnimationFrame(animFrame);
+  endFever();
+
+  // Cleanup remaining cards
+  cards.forEach(c => {
+    if (c.el.parentNode) c.el.parentNode.removeChild(c.el);
+  });
+  cards = [];
+
+  // Show results
+  setTimeout(showResults, 500);
+}
+
+function showResults() {
+  document.getElementById('game-screen').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'flex';
+
+  const title = document.getElementById('result-title');
+  if (lives > 0) {
+    title.textContent = missCount === 0 ? '🏆 パーフェクト！' : '🎉 クリア！';
+  } else {
+    title.textContent = '💪 おしかった！';
+  }
+
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-correct').textContent = correctCount;
+  document.getElementById('result-combo').textContent = maxCombo;
+  document.getElementById('result-miss').textContent = missCount;
+
+  // Show items learned
+  const itemsCont = document.getElementById('result-items');
+  itemsCont.innerHTML = '';
+  results.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'result-item ' + (r.correct ? 'correct' : 'wrong');
+    d.textContent = r.emoji + ' ' + r.name;
+    itemsCont.appendChild(d);
+  });
+}
+
+function goTitle() {
+  // Stop game if running
+  gameActive = false;
+  clearTimeout(spawnTimer);
+  cancelAnimationFrame(animFrame);
+  endFever();
+  cards.forEach(c => {
+    if (c.el.parentNode) c.el.parentNode.removeChild(c.el);
+  });
+  cards = [];
+  dragCard = null;
+  // Remove popups
+  document.querySelectorAll('.feedback, .trivia-popup, .combo-burst').forEach(e => e.remove());
+
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('title-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>
