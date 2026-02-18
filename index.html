@@ -306,6 +306,30 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 </div>
 
 <script>
+// ─── TRAIL ALT・ランキング連携 ───────────────────────────
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbzKUyiUHIMp9JRFX0LEa88plEoavkbrjTQ5oHf9T-FDd6b4fhqfTCBVBy5rWUZPUQbY/exec';
+const GAME_ID     = 7;
+const GAME_NAME   = '特産品マッチング';
+const SCORE_LABEL = '点';
+const ALT_AMOUNT  = 10;
+const TRAIL_PLAYER = new URLSearchParams(location.search).get('player') || null;
+
+async function sendResult(score) {
+  if (!TRAIL_PLAYER) return;
+  const opt = { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'} };
+  await fetch(GAS_URL, { ...opt, body: JSON.stringify({
+    action: 'saveRanking',
+    gameId: GAME_ID, gameName: GAME_NAME,
+    player: TRAIL_PLAYER, score: score, scoreLabel: SCORE_LABEL
+  })});
+  await fetch(GAS_URL, { ...opt, body: JSON.stringify({
+    action: 'addCoin',
+    player: TRAIL_PLAYER, gameId: GAME_ID,
+    gameName: GAME_NAME, amount: ALT_AMOUNT
+  })});
+}
+// ─────────────────────────────────────────────────────────
+
 const PREFECTURES = [
   { id:'hokkaido', name:'ほっかいどう', emoji:'❄️', bg:'linear-gradient(135deg,#0D47A1,#1976D2)', items:[
     { name:'じゃがいも', emoji:'🥔', trivia:'じゃがいも → ほっかいどう！にほんのやく8わり' },
@@ -914,6 +938,9 @@ function showResults(){
   const isFirstClear=lives>0&&!clearedLevels[currentLevel];
   const firstBonus=isFirstClear?5:0;
   if(isFirstClear)clearedLevels[currentLevel]=true;
+
+  // TRAIL連携: クリア成功時のみスコア送信
+  if(lives>0)sendResult(score);
 
   let starStr='';for(let i=0;i<3;i++)starStr+=(i<stars)?'★':'☆';
   document.getElementById('result-stars').textContent=starStr;
