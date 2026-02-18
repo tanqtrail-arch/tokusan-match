@@ -72,7 +72,10 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 .play-area{flex:1;position:relative;overflow:hidden;touch-action:none}
 .falling-card{position:absolute;width:105px;height:125px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:grab;z-index:20;transition:opacity .2s;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,0.4)}
 .falling-card .card-emoji{font-size:44px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.3))}
-.falling-card .card-name{font-size:14px;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.4);text-align:center;line-height:1.2}
+.falling-card .card-name{font-size:14px;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.4);text-align:center;line-height:1.2;display:none}
+.falling-card.touched .card-name{display:block;animation:namePopIn .25s ease forwards}
+.card-name-popup{position:absolute;top:-32px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-size:13px;font-weight:900;padding:4px 12px;border-radius:8px;white-space:nowrap;pointer-events:none;z-index:35;animation:namePopIn .25s ease forwards;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.15)}
+@keyframes namePopIn{0%{opacity:0;transform:translateX(-50%) scale(0.6)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
 .region-zones{display:flex;gap:6px;padding:6px 10px 14px;z-index:10}
 .region-zone{flex:1;padding:16px 6px;border-radius:18px;text-align:center;font-weight:900;font-size:clamp(14px,3.8vw,20px);color:#fff;position:relative;transition:all .3s;border:3px solid transparent;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .region-zone .zone-emoji{font-size:24px}
@@ -168,7 +171,7 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
   .modal-box{max-width:400px;padding:36px 32px}.modal-input{font-size:20px;padding:14px 18px}
   .hud{padding:14px 20px}.hud-back{width:42px;height:42px;font-size:20px}.hud-score{font-size:26px}.hud-level{font-size:15px}
   .hud-combo{font-size:19px;min-width:100px}.hud-lives{font-size:26px}
-  .falling-card{width:140px;height:165px;border-radius:20px;gap:8px}.falling-card .card-emoji{font-size:60px}.falling-card .card-name{font-size:18px}
+  .falling-card{width:140px;height:165px;border-radius:20px;gap:8px}.falling-card .card-emoji{font-size:60px}.falling-card .card-name{font-size:18px}.card-name-popup{font-size:16px;top:-36px;padding:5px 14px}
   .region-zones{gap:10px;padding:10px 16px 20px}.region-zone{padding:22px 10px;border-radius:22px;font-size:22px;min-height:100px;gap:6px;border-width:4px}.region-zone .zone-emoji{font-size:32px}
   .feedback{font-size:46px}.trivia-popup{font-size:18px;padding:14px 24px;bottom:160px}.combo-burst{font-size:60px}
   .result-title{font-size:42px}.result-stars{font-size:52px;letter-spacing:12px}
@@ -185,7 +188,7 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
   .title-emoji{font-size:100px;margin-top:50px}.title-text{font-size:60px}
   .level-select,.title-actions{width:480px}.level-btn{padding:22px 32px;font-size:21px}.level-btn .emoji{font-size:38px}
   .line-section{width:480px}
-  .falling-card{width:160px;height:185px;border-radius:24px}.falling-card .card-emoji{font-size:68px}.falling-card .card-name{font-size:20px}
+  .falling-card{width:160px;height:185px;border-radius:24px}.falling-card .card-emoji{font-size:68px}.falling-card .card-name{font-size:20px}.card-name-popup{font-size:18px;top:-40px;padding:6px 16px}
   .region-zones{gap:14px;padding:12px 24px 24px}.region-zone{padding:28px 14px;border-radius:26px;font-size:24px;min-height:115px}.region-zone .zone-emoji{font-size:38px}
   .hud{padding:16px 28px}.hud-score{font-size:30px}.hud-combo{font-size:22px}.hud-lives{font-size:30px}
   .feedback{font-size:56px}.combo-burst{font-size:72px}
@@ -852,9 +855,11 @@ function spawnOne(){
 }
 
 // Drag
-function onDragStart(e,el){if(!gameActive)return;e.preventDefault();const c=el._cardObj;if(!c||!c.alive)return;c.dragging=true;dragCard=c;const r=el.getBoundingClientRect();dragOffsetX=e.clientX-r.left;dragOffsetY=e.clientY-r.top;el.style.zIndex=30;el.style.cursor='grabbing';el.setPointerCapture(e.pointerId);el.addEventListener('pointermove',onDragMove);el.addEventListener('pointerup',onDragEnd)}
+function onDragStart(e,el){if(!gameActive)return;e.preventDefault();const c=el._cardObj;if(!c||!c.alive)return;c.dragging=true;dragCard=c;const r=el.getBoundingClientRect();dragOffsetX=e.clientX-r.left;dragOffsetY=e.clientY-r.top;el.style.zIndex=30;el.style.cursor='grabbing';el.setPointerCapture(e.pointerId);el.addEventListener('pointermove',onDragMove);el.addEventListener('pointerup',onDragEnd);showCardName(el,c)}
 function onDragMove(e){if(!dragCard)return;e.preventDefault();const pa=document.getElementById('play-area');const pr=pa.getBoundingClientRect();dragCard.x=e.clientX-pr.left-dragOffsetX;dragCard.y=e.clientY-pr.top-dragOffsetY;dragCard.el.style.left=dragCard.x+'px';dragCard.el.style.top=dragCard.y+'px';highlightZone(e.clientX,e.clientY)}
-function onDragEnd(e){if(!dragCard)return;e.preventDefault();dragCard.dragging=false;dragCard.el.style.cursor='grab';dragCard.el.removeEventListener('pointermove',onDragMove);dragCard.el.removeEventListener('pointerup',onDragEnd);document.querySelectorAll('.region-zone').forEach(z=>z.classList.remove('highlight'));let matched=false;document.querySelectorAll('.region-zone').forEach(z=>{const r=z.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){handleAnswer(dragCard,parseInt(z.dataset.index),z);matched=true}});dragCard=null}
+function onDragEnd(e){if(!dragCard)return;e.preventDefault();hideCardName(dragCard.el);dragCard.dragging=false;dragCard.el.style.cursor='grab';dragCard.el.removeEventListener('pointermove',onDragMove);dragCard.el.removeEventListener('pointerup',onDragEnd);document.querySelectorAll('.region-zone').forEach(z=>z.classList.remove('highlight'));let matched=false;document.querySelectorAll('.region-zone').forEach(z=>{const r=z.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){handleAnswer(dragCard,parseInt(z.dataset.index),z);matched=true}});dragCard=null}
+function showCardName(el,cardObj){el.classList.add('touched');const popup=document.createElement('div');popup.className='card-name-popup';popup.textContent=cardObj.item.name;el.appendChild(popup);el._namePopup=popup}
+function hideCardName(el){el.classList.remove('touched');if(el._namePopup){el._namePopup.remove();el._namePopup=null}}
 function highlightZone(cx,cy){document.querySelectorAll('.region-zone').forEach(z=>{const r=z.getBoundingClientRect();z.classList.toggle('highlight',cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom)})}
 
 function handleAnswer(cardObj,zoneIdx,zoneEl){
