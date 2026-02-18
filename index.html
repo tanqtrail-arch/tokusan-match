@@ -60,7 +60,7 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 .modal-input::placeholder{color:rgba(255,255,255,0.2);font-weight:400}
 
 /* GAME */
-#game-screen{background:linear-gradient(180deg,#0a0a1a 0%,#060612 100%);height:100vh;height:100dvh;z-index:90}
+#game-screen{background:linear-gradient(180deg,#0a0a1a 0%,#060612 100%);height:100vh;height:100dvh;z-index:90;align-items:stretch;overflow:hidden}
 .hud{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.4);z-index:10}
 .hud-back{width:34px;height:34px;border:2px solid rgba(255,255,255,0.25);border-radius:50%;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);font-size:16px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
 .hud-back:hover,.hud-back:active{background:rgba(255,255,255,0.12);color:#fff}
@@ -69,7 +69,7 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 .hud-combo{color:var(--accent-pink);font-size:15px;font-weight:700;min-width:70px;text-align:center;transition:transform .15s}
 .hud-combo.pop{transform:scale(1.3)}
 .hud-lives{font-size:20px;text-align:right}
-.play-area{flex:1;position:relative;overflow:hidden}
+.play-area{flex:1;position:relative;overflow:hidden;touch-action:none}
 .falling-card{position:absolute;width:105px;height:125px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:grab;z-index:20;transition:opacity .2s;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,0.4)}
 .falling-card .card-emoji{font-size:44px;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.3))}
 .falling-card .card-name{font-size:14px;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.4);text-align:center;line-height:1.2}
