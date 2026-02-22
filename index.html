@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>とくさんぶつマッチング</title>
+<link rel="stylesheet" href="https://trail-game-pro.onrender.com/sdk/trail-auth.css">
+<script src="https://trail-game-pro.onrender.com/sdk/trail-sdk.js"></script>
+<script src="https://trail-game-pro.onrender.com/sdk/trail-auth.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Zen+Maru+Gothic:wght@700;900&display=swap');
 :root{--bg-dark:#0a0a1a;--bg-mid:#151528;--accent-gold:#FFD700;--accent-pink:#FF6B9D;--accent-blue:#4FC3F7;--alt-green:#4ADE80;--miss-red:#FF5252;--perfect:#69F0AE}
@@ -207,12 +210,14 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 </style>
 </head>
 <body>
+<div id="pinScreen"></div>
 <div class="stars" id="stars"></div>
 <div class="alt-badge" id="alt-badge" style="display:none">🪙 <span id="alt-display">0</span> ALT</div>
 
 <!-- TITLE -->
 <div id="title-screen" class="screen active">
   <div style="height:20px"></div>
+  <div id="player-name-display" style="text-align:center;color:var(--accent-gold);font-size:15px;font-weight:700;min-height:22px"></div>
   <div class="title-emoji">🍎🐟🍊</div>
   <div class="title-text">とくさんぶつ<br>マッチング</div>
   <div class="title-sub">ただしいちいきにスワイプしよう！</div>
@@ -306,28 +311,8 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 </div>
 
 <script>
-// ─── TRAIL ALT・ランキング連携 ───────────────────────────
-const GAS_URL     = 'https://script.google.com/macros/s/AKfycbzKUyiUHIMp9JRFX0LEa88plEoavkbrjTQ5oHf9T-FDd6b4fhqfTCBVBy5rWUZPUQbY/exec';
-const GAME_ID     = 7;
-const GAME_NAME   = '特産品マッチング';
-const SCORE_LABEL = '点';
-const ALT_AMOUNT  = 10;
-const TRAIL_PLAYER = new URLSearchParams(location.search).get('player') || null;
-
-async function sendResult(score) {
-  if (!TRAIL_PLAYER) return;
-  const opt = { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'} };
-  await fetch(GAS_URL, { ...opt, body: JSON.stringify({
-    action: 'saveRanking',
-    gameId: GAME_ID, gameName: GAME_NAME,
-    player: TRAIL_PLAYER, score: score, scoreLabel: SCORE_LABEL
-  })});
-  await fetch(GAS_URL, { ...opt, body: JSON.stringify({
-    action: 'addCoin',
-    player: TRAIL_PLAYER, gameId: GAME_ID,
-    gameName: GAME_NAME, amount: ALT_AMOUNT
-  })});
-}
+// ─── TRAIL Game Pro 3.2 SDK ──────────────────────────────
+const sdk = new TrailSDK({ gameId: 7, tenantSlug: "trail" });
 // ─────────────────────────────────────────────────────────
 
 const PREFECTURES = [
@@ -798,6 +783,7 @@ function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Mat
 // ===== GAME =====
 function startGame(lvIdx){
   if(audioCtx.state==='suspended')audioCtx.resume();
+  try{sdk.startSession()}catch(e){}
   currentLevel=lvIdx;
   currentLevelData=buildLevel(lvIdx);
   const lv=currentLevelData;
@@ -939,8 +925,12 @@ function showResults(){
   const firstBonus=isFirstClear?5:0;
   if(isFirstClear)clearedLevels[currentLevel]=true;
 
-  // TRAIL連携: クリア成功時のみスコア送信
-  if(lives>0)sendResult(score);
+  // TRAIL Game Pro 3.2: endSession + ALTポップアップ
+  try{
+    const sessionResult=sdk.endSession({score:score,correct:correctCount,total:totalAnswered});
+    const earnedAlt=sessionResult&&sessionResult.alt?sessionResult.alt:0;
+    if(earnedAlt>0){try{sdk.showAltPopup(earnedAlt)}catch(e){}}
+  }catch(e){}
 
   let starStr='';for(let i=0;i<3;i++)starStr+=(i<stars)?'★':'☆';
   document.getElementById('result-stars').textContent=starStr;
@@ -1001,10 +991,33 @@ function goTitle(){
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('alt-badge').style.display='block';
-  updateAltBadge();checkWeeklyReset();
-  const saved=getSavedName();
-  if(saved)document.getElementById('line-name').value=saved;
+  try{
+    const params=new URLSearchParams(location.search);
+    const token=params.get('token');
+    sdk.verifyPin({
+      containerId:'pinScreen',
+      token:token,
+      onSuccess:function(){
+        try{
+          const name=sdk.getPlayerName();
+          if(name){
+            document.getElementById('player-name-display').textContent='👋 '+name;
+            document.getElementById('line-name').value=name;
+            saveName(name);
+          }
+        }catch(e){}
+        document.getElementById('alt-badge').style.display='block';
+        updateAltBadge();checkWeeklyReset();
+        const saved=getSavedName();
+        if(saved&&!document.getElementById('line-name').value)document.getElementById('line-name').value=saved;
+      }
+    });
+  }catch(e){
+    document.getElementById('alt-badge').style.display='block';
+    updateAltBadge();checkWeeklyReset();
+    const saved=getSavedName();
+    if(saved)document.getElementById('line-name').value=saved;
+  }
 });
 </script>
 </body>
