@@ -284,16 +284,8 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 const TRAIL_API = 'https://trail-game-pro-3-2.onrender.com';
 const TRAIL_PLAYER = new URLSearchParams(location.search).get('player') || null;
 
-function calcAlt(score) {
-  if (score >= 1000) return 30;
-  if (score >= 500)  return 20;
-  if (score >= 100)  return 10;
-  return 5;
-}
-
-async function sendResultToTrail(score) {
+async function sendResultToTrail(score, alt) {
   if (!TRAIL_PLAYER) return 0;
-  const alt = calcAlt(score);
   try {
     await fetch(`${TRAIL_API}/api/external/game-result`, {
       method: 'POST',
@@ -907,7 +899,8 @@ function showResults(){
   if(isFirstClear)clearedLevels[currentLevel]=true;
 
   // TRAIL GP3: スコア送信
-  sendResultToTrail(score).then(alt => {
+  const totalAltForTrail=altReward+firstBonus;
+  sendResultToTrail(score, totalAltForTrail).then(alt => {
     if (TRAIL_PLAYER && alt > 0) {
       const altNumEl = document.getElementById('result-alt-num');
       altNumEl.textContent = '🪙 ' + alt + ' ALT を獲得！';
