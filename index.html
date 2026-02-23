@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>とくさんぶつマッチング</title>
-<link rel="stylesheet" href="https://trail-game-pro.onrender.com/sdk/trail-auth.css">
-<script src="https://trail-game-pro.onrender.com/sdk/trail-sdk.js"></script>
-<script src="https://trail-game-pro.onrender.com/sdk/trail-auth.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Zen+Maru+Gothic:wght@700;900&display=swap');
 :root{--bg-dark:#0a0a1a;--bg-mid:#151528;--accent-gold:#FFD700;--accent-pink:#FF6B9D;--accent-blue:#4FC3F7;--alt-green:#4ADE80;--miss-red:#FF5252;--perfect:#69F0AE}
@@ -31,19 +28,10 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 .level-btn .emoji{font-size:26px}.level-btn .info{text-align:left}
 .level-btn .info small{display:block;color:rgba(255,255,255,0.4);font-weight:400;font-size:12px;margin-top:2px}
 
-/* TITLE BUTTONS (ranking, line) */
+/* TITLE BUTTONS */
 .title-actions{display:flex;flex-direction:column;gap:10px;width:min(320px,90vw);position:relative;z-index:1;margin-top:20px}
 .title-action-btn{padding:14px 20px;border:2px solid rgba(255,255,255,0.1);border-radius:14px;background:rgba(255,255,255,0.04);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:all .3s;text-align:center;backdrop-filter:blur(8px)}
 .title-action-btn:hover,.title-action-btn:active{background:rgba(255,255,255,0.1);border-color:var(--accent-gold);transform:scale(1.02)}
-
-/* LINE SECTION */
-.line-section{position:relative;z-index:1;width:min(320px,90vw);margin-top:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px}
-.line-section h3{font-size:15px;color:var(--alt-green);margin-bottom:12px;font-weight:900}
-.line-input{width:100%;padding:10px 14px;border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;background:rgba(255,255,255,0.05);color:#fff;font-family:inherit;font-size:15px;font-weight:700;outline:none;transition:border-color .2s;margin-bottom:10px}
-.line-input:focus{border-color:var(--alt-green)}
-.line-input::placeholder{color:rgba(255,255,255,0.25)}
-.line-btn{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#06C755,#04A847);color:#fff;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-.line-btn:hover{transform:scale(1.02)}.line-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none}
 
 /* CONFIRM MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
@@ -167,7 +155,6 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
   .title-emoji{font-size:90px;margin-top:60px}.title-text{font-size:52px;margin-top:20px}.title-sub{font-size:18px}
   .level-select,.title-actions{width:420px;gap:14px}.level-btn,.title-action-btn{padding:18px 28px;font-size:19px;border-radius:18px}
   .level-btn .emoji{font-size:34px}.alt-badge{font-size:20px;padding:10px 24px}
-  .line-section{width:420px;padding:28px}.line-input{padding:14px 18px;font-size:17px}.line-btn{padding:16px;font-size:18px}
   .modal-box{max-width:400px;padding:36px 32px}.modal-input{font-size:20px;padding:14px 18px}
   .hud{padding:14px 20px}.hud-back{width:42px;height:42px;font-size:20px}.hud-score{font-size:26px}.hud-level{font-size:15px}
   .hud-combo{font-size:19px;min-width:100px}.hud-lives{font-size:26px}
@@ -187,7 +174,6 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 @media(min-width:900px){
   .title-emoji{font-size:100px;margin-top:50px}.title-text{font-size:60px}
   .level-select,.title-actions{width:480px}.level-btn{padding:22px 32px;font-size:21px}.level-btn .emoji{font-size:38px}
-  .line-section{width:480px}
   .falling-card{width:160px;height:185px;border-radius:24px}.falling-card .card-emoji{font-size:68px}.falling-card .card-name{font-size:20px}
   .region-zones{gap:14px;padding:12px 24px 24px}.region-zone{padding:28px 14px;border-radius:26px;font-size:24px;min-height:115px}.region-zone .zone-emoji{font-size:38px}
   .hud{padding:16px 28px}.hud-score{font-size:30px}.hud-combo{font-size:22px}.hud-lives{font-size:30px}
@@ -210,7 +196,6 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
 </style>
 </head>
 <body>
-<div id="pinScreen"></div>
 <div class="stars" id="stars"></div>
 <div class="alt-badge" id="alt-badge" style="display:none">🪙 <span id="alt-display">0</span> ALT</div>
 
@@ -229,11 +214,6 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
   </div>
   <div class="title-actions">
     <button class="title-action-btn" onclick="showScreen('ranking-screen');renderRanking()">🏆 ランキング</button>
-  </div>
-  <div class="line-section">
-    <h3>💰 ALTをTRAILにほうこくする</h3>
-    <input class="line-input" id="line-name" type="text" placeholder="なまえをにゅうりょく" maxlength="20" oninput="updateLineBtn()">
-    <button class="line-btn" id="line-btn" disabled onclick="showLineConfirm()">💬 LINEでほうこくする</button>
   </div>
 </div>
 
@@ -268,6 +248,7 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
   </div>
   <div class="result-items" id="result-items"></div>
   <button class="btn-restart" onclick="goTitle()">もどる</button>
+  <button class="btn-restart" onclick="goHome()" style="background:linear-gradient(135deg,#4FC3F7,#0288D1);margin-top:8px">🏠 ホームに戻る</button>
 </div>
 
 <!-- RANKING SCREEN -->
@@ -298,22 +279,44 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:var
   </div>
 </div>
 
-<!-- LINE CONFIRM MODAL -->
-<div class="modal-overlay" id="line-confirm-modal">
-  <div class="modal-box">
-    <div style="font-size:28px">⚠️</div>
-    <div class="warn" id="line-confirm-msg"></div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="hideModal('line-confirm-modal')">やめる</button>
-      <button class="btn-ok" onclick="doLineReport()">OK！おくる</button>
-    </div>
-  </div>
-</div>
-
 <script>
-// ─── TRAIL Game Pro 3.2 SDK ──────────────────────────────
-const sdk = new TrailSDK({ gameId: 7, tenantSlug: "trail" });
-// ─────────────────────────────────────────────────────────
+// ─── TRAIL GP3 連携 ───
+const TRAIL_API = 'https://trail-game-pro-3-2.onrender.com';
+const TRAIL_PLAYER = new URLSearchParams(location.search).get('player') || null;
+
+function calcAlt(score) {
+  if (score >= 1000) return 30;
+  if (score >= 500)  return 20;
+  if (score >= 100)  return 10;
+  return 5;
+}
+
+async function sendResultToTrail(score) {
+  if (!TRAIL_PLAYER) return 0;
+  const alt = calcAlt(score);
+  try {
+    await fetch(`${TRAIL_API}/api/external/game-result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        player: TRAIL_PLAYER,
+        game_id: 'tokusan-match',
+        game_name: '特産品マッチング',
+        score: score,
+        alt: alt
+      })
+    });
+  } catch (e) {
+    console.error('ALT送信失敗:', e);
+  }
+  return alt;
+}
+
+function goHome() {
+  window.location.href = TRAIL_PLAYER
+    ? 'https://trail-game-pro-3-2.onrender.com'
+    : location.href.split('?')[0];
+}
 
 const PREFECTURES = [
   { id:'hokkaido', name:'ほっかいどう', emoji:'❄️', bg:'linear-gradient(135deg,#0D47A1,#1976D2)', items:[
@@ -583,7 +586,7 @@ const CARD_COLOR='linear-gradient(135deg,#4A4A5A,#5C5C6E)';
 
 // ===== ALT SYSTEM =====
 let altTotal=0, altSession=0, clearedLevels={};
-function updateAltBadge(){document.getElementById('alt-display').textContent=altTotal;updateLineBtn()}
+function updateAltBadge(){document.getElementById('alt-display').textContent=altTotal}
 function getStarRating(c,t){if(t===0)return 0;const r=c/t;if(r>=1)return 3;if(r>=0.8)return 2;return 1}
 function getStarBonus(s,alive){if(!alive)return 0;if(s===3)return 10;if(s===2)return 6;return 3}
 
@@ -671,8 +674,6 @@ function doRegister(){
   if(!name)return;
   saveName(name);
   hideModal('name-modal');
-  // Also update LINE name field
-  document.getElementById('line-name').value=name;
   const result=addToRanking(name,score);
   lastRegisteredScore=score;
 
@@ -734,25 +735,6 @@ function renderRanking(){
   list.innerHTML=html;
 }
 
-// LINE Report
-function updateLineBtn(){
-  const name=document.getElementById('line-name').value.trim();
-  document.getElementById('line-btn').disabled=(altTotal<=0||name.length===0);
-}
-function showLineConfirm(){
-  document.getElementById('line-confirm-msg').innerHTML='<strong>'+altTotal+'</strong> ALTをほうこくしてリセットします';
-  document.getElementById('line-confirm-modal').classList.add('show');
-}
-function doLineReport(){
-  hideModal('line-confirm-modal');
-  const name=document.getElementById('line-name').value.trim();
-  const cleared=Object.keys(clearedLevels).length;
-  const text=`【とくさんぶつマッチング ALTほうこく】\nなまえ: ${name}\n💰 ${altTotal}ALT\nクリアずみ: レベル${cleared}/4`;
-  const url=`https://line.me/R/oaMessage/@trail_official/?${encodeURIComponent(text)}`;
-  altTotal=0;altSession=0;updateAltBadge();
-  window.open(url,'_blank');
-}
-
 // ===== STATE =====
 let currentLevel=0,score=0,combo=0,maxCombo=0,lives=3;
 let correctCount=0,missCount=0,totalSpawned=0;
@@ -783,7 +765,6 @@ function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Mat
 // ===== GAME =====
 function startGame(lvIdx){
   if(audioCtx.state==='suspended')audioCtx.resume();
-  try{sdk.startSession()}catch(e){}
   currentLevel=lvIdx;
   currentLevelData=buildLevel(lvIdx);
   const lv=currentLevelData;
@@ -925,12 +906,13 @@ function showResults(){
   const firstBonus=isFirstClear?5:0;
   if(isFirstClear)clearedLevels[currentLevel]=true;
 
-  // TRAIL Game Pro 3.2: endSession + ALTポップアップ
-  try{
-    const sessionResult=sdk.endSession({score:score,correct:correctCount,total:totalAnswered});
-    const earnedAlt=sessionResult&&sessionResult.alt?sessionResult.alt:0;
-    if(earnedAlt>0){try{sdk.showAltPopup(earnedAlt)}catch(e){}}
-  }catch(e){}
+  // TRAIL GP3: スコア送信
+  sendResultToTrail(score).then(alt => {
+    if (TRAIL_PLAYER && alt > 0) {
+      const altNumEl = document.getElementById('result-alt-num');
+      altNumEl.textContent = '🪙 ' + alt + ' ALT を獲得！';
+    }
+  });
 
   let starStr='';for(let i=0;i<3;i++)starStr+=(i<stars)?'★':'☆';
   document.getElementById('result-stars').textContent=starStr;
@@ -983,41 +965,17 @@ function goTitle(){
   document.querySelectorAll('.feedback,.trivia-popup,.combo-burst,.edge-flash,.fever-counter').forEach(e=>e.remove());
   feverCounterEl=null;
   showScreen('title-screen');
-  // Sync name from ranking to LINE
-  const saved=getSavedName();
-  if(saved)document.getElementById('line-name').value=saved;
   updateAltBadge();
 }
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{
-  try{
-    const params=new URLSearchParams(location.search);
-    const token=params.get('token');
-    sdk.verifyPin({
-      containerId:'pinScreen',
-      token:token,
-      onSuccess:function(){
-        try{
-          const name=sdk.getPlayerName();
-          if(name){
-            document.getElementById('player-name-display').textContent='👋 '+name;
-            document.getElementById('line-name').value=name;
-            saveName(name);
-          }
-        }catch(e){}
-        document.getElementById('alt-badge').style.display='block';
-        updateAltBadge();checkWeeklyReset();
-        const saved=getSavedName();
-        if(saved&&!document.getElementById('line-name').value)document.getElementById('line-name').value=saved;
-      }
-    });
-  }catch(e){
-    document.getElementById('alt-badge').style.display='block';
-    updateAltBadge();checkWeeklyReset();
-    const saved=getSavedName();
-    if(saved)document.getElementById('line-name').value=saved;
+  if(TRAIL_PLAYER){
+    document.getElementById('player-name-display').textContent='👋 '+TRAIL_PLAYER;
+    saveName(TRAIL_PLAYER);
   }
+  document.getElementById('alt-badge').style.display='block';
+  updateAltBadge();checkWeeklyReset();
 });
 </script>
 </body>
